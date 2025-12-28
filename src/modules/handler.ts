@@ -1,3 +1,4 @@
+import { sleep } from "bun";
 import { spawn, type ChildProcess } from "child_process";
 import * as fs from "fs";
 import { v4 } from "uuid";
@@ -8,6 +9,11 @@ export default class Handler {
   public static instance: ChildProcess;
 
   private constructor() {}
+
+  public static async Init(): Promise<void> {
+    this.DeleteHangedBackups();
+    this.BackupLoop();
+  }
 
   public static Start(): boolean {
     const config = FileManager.ReadConfig();
@@ -85,20 +91,37 @@ export default class Handler {
     });
   }
   public static async Backup(): Promise<boolean> {
+    const id = v4();
+
     const process = spawn("scripts/backup.sh", [], {
       env: {
         cachepath: "data/cache",
         backuppath: "data/backups",
-        backupname: v4(),
+        backupname: id,
         serverpath: "data/server",
       },
     });
 
     return new Promise<boolean>((resolve) => {
-      process.once("exit", (code) => {
+      process.once("exit", async (code) => {
         switch (code) {
           case 0:
-            Logger.Notice("Server backed up successfully");
+            FileManager.WriteBackups([
+              ...FileManager.ReadBackups(),
+              {
+                created_at: new Date(),
+                id,
+                protected: false,
+              },
+            ]);
+
+            await sleep(1000); // Wait a second to ensure file write completion
+
+            const deleted = await this.DeleteOldBackups();
+
+            Logger.Notice(
+              `Server backed up successfully! Deleted ${deleted} old backups.`
+            );
             resolve(true);
             break;
           case 1:
@@ -122,6 +145,11 @@ export default class Handler {
     });
   }
   public static async Restore(id: string): Promise<boolean> {
+    if (this.instance) {
+      Logger.Warn("Attempted to restore backup, but server is running.");
+      return false;
+    }
+
     const process = spawn("scripts/restore.sh", [], {
       env: {
         cachepath: "data/cache",
@@ -167,5 +195,70 @@ export default class Handler {
 
     this.instance.stdin?.write(data + "\n");
     return true;
+  }
+
+  private static async DeleteOldBackups(): Promise<number> {
+    const config = FileManager.ReadConfig();
+    const backups = FileManager.ReadBackups()
+      .filter((backup) => !backup.protected)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+    if (config.auto_backup_retention >= backups.length) {
+      return 0;
+    }
+
+    const extras = backups.slice(config.auto_backup_retention);
+
+    for (const backup of extras) {
+      fs.rmSync(`data/backups/${backup.id}.tar.gz`);
+
+      const backups = FileManager.ReadBackups().filter(
+        (b) => b.id !== backup.id
+      );
+
+      FileManager.WriteBackups(backups);
+
+      await sleep(100); // Small delay to ensure file system stability
+    }
+
+    return extras.length;
+  }
+  private static DeleteHangedBackups(): number {
+    const backups = FileManager.ReadBackups();
+    const files = fs.readdirSync("data/backups");
+    let deleted = 0;
+
+    for (const file of files) {
+      const id = file.replace(".tar.gz", "");
+
+      if (!backups.some((backup) => backup.id === id)) {
+        fs.rmSync(`data/backups/${file}`);
+        deleted++;
+      }
+    }
+
+    if (deleted > 0) {
+      Logger.Warn(`Deleted ${deleted} hanged backups.`);
+    }
+
+    return deleted;
+  }
+
+  private static BackupLoop(): void {
+    const config = FileManager.ReadConfig();
+
+    if (!config.auto_backup) {
+      return;
+    }
+
+    Logger.Debug("Automatic backup loop started.");
+
+    setInterval(() => {
+      Logger.Info("Running automatic backup...");
+      this.Backup();
+    }, config.auto_backup_speed * 1000 * 60);
   }
 }
