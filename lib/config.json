@@ -1,0 +1,18 @@
+{
+  "show_console": true,
+  "server_allowed_role": "",
+
+  "server_log": true,
+  "server_log_cooldown": 5,
+  "server_log_speed": 1,
+  "server_log_lines": 10,
+  "server_log_channel": "",
+
+  "auto_restart": true,
+  "auto_restart_timing": [],
+  "auto_restart_countdown_options": [],
+
+  "auto_backup": true,
+  "auto_backup_speed": 60,
+  "auto_backup_retention": 24
+}
