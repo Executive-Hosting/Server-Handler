@@ -50,6 +50,7 @@ export default class Handler {
 
     return true;
   }
+
   public static async Install(link: string): Promise<boolean> {
     const process = spawn("scripts/install.sh", [], {
       env: {
@@ -156,5 +157,15 @@ export default class Handler {
         }
       });
     });
+  }
+
+  public static Write(data: string): boolean {
+    if (!this.instance) {
+      Logger.Warn("Attempted to write to server, but server is not running.");
+      return false;
+    }
+
+    this.instance.stdin?.write(data + "\n");
+    return true;
   }
 }
