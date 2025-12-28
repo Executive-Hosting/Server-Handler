@@ -10,9 +10,9 @@ export default class FileManager {
   }
 
   public static ReadBackups(): Backup[] {
-    return JSON.parse(fs.readFileSync("lib/backups.json", "utf8"));
+    return JSON.parse(fs.readFileSync("data/backups.json", "utf8"));
   }
   public static WriteBackups(backups: Backup[]): void {
-    fs.writeFileSync("lib/backups.json", JSON.stringify(backups, null, 2));
+    fs.writeFileSync("data/backups.json", JSON.stringify(backups, null, 2));
   }
 }
