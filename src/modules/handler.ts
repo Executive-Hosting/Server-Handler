@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess } from "child_process";
 import * as fs from "fs";
 import { v4 } from "uuid";
+import FileManager from "../utils/fileManager";
 import Logger from "../utils/logger";
 
 export default class Handler {
@@ -8,11 +9,46 @@ export default class Handler {
 
   private constructor() {}
 
-  public static Start(): void {
+  public static Start(): boolean {
+    const config = FileManager.ReadConfig();
+
     if (!fs.existsSync("data/server")) {
       Logger.Warn("Attempted to start server, but server is not installed.");
-      return;
+      return false;
     }
+    if (this.instance) {
+      Logger.Warn("Attempted to start server, but server is already running.");
+      return false;
+    }
+
+    this.instance = spawn("./bedrock_server", [], {
+      cwd: "data/server",
+    });
+
+    Logger.Notice("Server process started with PID " + this.instance.pid);
+
+    process.stdin.on("data", (data) => {
+      this.instance.stdin?.write(data);
+    });
+
+    this.instance.stdout?.on("data", (buffer: Buffer) => {
+      if (config.show_console) {
+        process.stdout.write(buffer);
+      }
+    });
+    this.instance.stderr?.on("data", (buffer: Buffer) => {
+      if (config.show_console) {
+        process.stderr.write(buffer);
+      }
+    });
+
+    this.instance.once("exit", (code) => {
+      Logger.Notice("Server process exited with code " + code);
+
+      this.instance = undefined!;
+    });
+
+    return true;
   }
   public static async Install(link: string): Promise<boolean> {
     const process = spawn("scripts/install.sh", [], {
