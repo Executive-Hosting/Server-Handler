@@ -1,5 +1,5 @@
-import type { Backup, Config } from "../types/fileManager";
 import * as fs from "fs";
+import type { Backup, Config } from "../types/fileManager";
 
 export default class FileManager {
   public static ReadConfig(): Config {

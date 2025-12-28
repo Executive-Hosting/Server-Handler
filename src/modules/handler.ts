@@ -8,7 +8,14 @@ import Logger from "../utils/logger";
 export default class Handler {
   public static instance: ChildProcess;
 
-  private constructor() {}
+  private constructor() {
+    if (!fs.existsSync("data")) {
+      Logger.Debug("Initalizing data folder...");
+
+      fs.mkdirSync("data/backups", { recursive: true });
+      fs.writeFileSync("data/backups.json", "[]", "utf8");
+    }
+  }
 
   public static async Init(): Promise<void> {
     this.DeleteHangedBackups();
