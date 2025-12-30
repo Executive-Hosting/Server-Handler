@@ -2,6 +2,7 @@ import { sleep } from "bun";
 import { spawn, type ChildProcess } from "child_process";
 import * as fs from "fs";
 import { v4 } from "uuid";
+import Cache from "../utils/cache";
 import FileManager from "../utils/fileManager";
 import Logger from "../utils/logger";
 
@@ -44,11 +45,13 @@ export default class Handler {
     this.instance.stdout?.on("data", (buffer: Buffer) => {
       if (config.show_console) {
         process.stdout.write(buffer);
+        Cache.LogLines.push(buffer.toString());
       }
     });
     this.instance.stderr?.on("data", (buffer: Buffer) => {
       if (config.show_console) {
         process.stderr.write(buffer);
+        Cache.LogLines.push(buffer.toString());
       }
     });
 

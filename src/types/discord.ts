@@ -11,7 +11,7 @@ export interface Command {
 }
 export interface EmbedData {
   interaction: ChatInputCommandInteraction;
-  title: string;
+  title?: string;
   description: string | string[];
   color: number;
   footer?: EmbedFooterOptions;

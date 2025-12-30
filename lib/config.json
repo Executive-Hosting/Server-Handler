@@ -8,7 +8,7 @@
   "server_log_channel": "",
 
   "auto_restart": true,
-  "auto_restart_timing": ["13:19"],
+  "auto_restart_timing": [],
   "auto_restart_countdown_options": [
     {
       "delay": 30,

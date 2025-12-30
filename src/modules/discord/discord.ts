@@ -1,14 +1,18 @@
 import {
   Client,
+  Colors,
   EmbedBuilder,
   Events,
   IntentsBitField,
   MessageFlags,
   REST,
   Routes,
+  TextChannel,
+  type EmbedData as DiscordEmbedData,
 } from "discord.js";
 import * as fs from "fs";
 import type { Command, EmbedData } from "../../types/discord";
+import FileManager from "../../utils/fileManager";
 import Logger from "../../utils/logger";
 
 export default class Discord {
@@ -50,7 +54,8 @@ export default class Discord {
               url: avatar,
             }
           : undefined,
-    });
+      timestamp: new Date(),
+    } as DiscordEmbedData);
 
     return embed;
   }
@@ -65,6 +70,15 @@ export default class Discord {
 
     this.instance.once(Events.ClientReady, (client) => {
       Logger.Notice(`Logged in as ${client.user.tag}!`);
+
+      const config = FileManager.ReadConfig();
+
+      if (config.server_log) {
+        this.Write(
+          ["[SERVER HANDLER] Systems have safely started!"],
+          config.server_log_channel
+        );
+      }
     });
     this.instance.on(Events.InteractionCreate, async (interaction) => {
       if (!interaction.isChatInputCommand()) {
@@ -113,6 +127,31 @@ export default class Discord {
     });
 
     this.instance.login(token);
+  }
+
+  public static Write(lines: string[], channelId: string): void {
+    const channel = this.instance.channels.cache.get(channelId) as
+      | TextChannel
+      | undefined;
+
+    if (!channel) {
+      Logger.Warn("Could not find log channel!");
+      return;
+    }
+
+    channel.send({
+      embeds: [
+        new EmbedBuilder({
+          description: lines.join("\n"),
+          color: Colors.Gold,
+          footer: {
+            text: channel.guild.name,
+            icon_url: channel.guild.iconURL() ?? undefined,
+          },
+          timestamp: new Date(),
+        }),
+      ],
+    });
   }
 
   private static LoadCommands(): void {
