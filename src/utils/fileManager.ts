@@ -2,6 +2,8 @@ import * as fs from "fs";
 import type { Backup, Config } from "../types/fileManager";
 
 export default class FileManager {
+  private constructor() {}
+
   public static ReadConfig(): Config {
     return JSON.parse(fs.readFileSync("lib/config.json", "utf8"));
   }

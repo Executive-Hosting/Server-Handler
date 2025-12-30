@@ -131,7 +131,10 @@ export default class Handler {
       });
     });
   }
-  public static async Backup(): Promise<boolean> {
+  public static async Backup(
+    isProtected?: boolean,
+    name?: string
+  ): Promise<boolean> {
     const id = v4();
 
     const process = spawn("scripts/backup.sh", [], {
@@ -152,7 +155,8 @@ export default class Handler {
               {
                 created_at: new Date(),
                 id,
-                protected: false,
+                name,
+                protected: isProtected === undefined ? false : isProtected,
               },
             ]);
 

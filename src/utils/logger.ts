@@ -1,46 +1,48 @@
 import chalk from "chalk";
 
 export default class Logger {
+  private constructor() {}
+
   public static Debug(...data: unknown[]): void {
     console.log(
       chalk.gray(`[${new Date().toLocaleString()}]`),
       chalk.bold(chalk.magenta("[DEBUG]")),
-      ...this.Map(data),
+      ...this.Map(data)
     );
   }
   public static Info(...data: unknown[]): void {
     console.log(
       chalk.gray(`[${new Date().toLocaleString()}]`),
       chalk.bold(chalk.cyan("[INFO]")),
-      ...this.Map(data),
+      ...this.Map(data)
     );
   }
   public static Notice(...data: unknown[]): void {
     console.log(
       chalk.gray(`[${new Date().toLocaleString()}]`),
       chalk.bold(chalk.green("[NOTICE]")),
-      ...this.Map(data),
+      ...this.Map(data)
     );
   }
   public static Warn(...data: unknown[]): void {
     console.log(
       chalk.gray(`[${new Date().toLocaleString()}]`),
       chalk.bold(chalk.yellow("[WARN]")),
-      ...this.Map(data),
+      ...this.Map(data)
     );
   }
   public static Error(...data: unknown[]): void {
     console.log(
       chalk.gray(`[${new Date().toLocaleString()}]`),
       chalk.bold(chalk.red("[ERROR]")),
-      ...this.Map(data),
+      ...this.Map(data)
     );
   }
   public static Fatal(...data: unknown[]): void {
     console.log(
       chalk.gray(`[${new Date().toLocaleString()}]`),
       chalk.bold(chalk.bgRed("[FATAL]")),
-      ...this.Map(data),
+      ...this.Map(data)
     );
     process.exit(1);
   }
@@ -55,7 +57,7 @@ export default class Logger {
           break;
         case "boolean":
           mapped.push(
-            value === true ? chalk.green("true") : chalk.red("false"),
+            value === true ? chalk.green("true") : chalk.red("false")
           );
           break;
         case "number":

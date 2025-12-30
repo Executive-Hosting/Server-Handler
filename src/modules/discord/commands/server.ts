@@ -11,7 +11,7 @@ import Replies from "../replies";
 export default {
   data: new SlashCommandBuilder()
     .setName("server")
-    .setDescription("Base server management commands.")
+    .setDescription("Server management commands.")
     .addSubcommand((command) =>
       command.setName("start").setDescription("Start the server.")
     )
