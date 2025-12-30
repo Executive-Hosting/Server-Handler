@@ -6,7 +6,7 @@ import FileManager from "../utils/fileManager";
 import Logger from "../utils/logger";
 
 export default class Handler {
-  public static instance: ChildProcess;
+  private static instance: ChildProcess;
 
   private constructor() {}
 
@@ -26,7 +26,7 @@ export default class Handler {
   public static Start(): boolean {
     const config = FileManager.ReadConfig();
 
-    if (!fs.existsSync("data/server")) {
+    if (!this.IsInstalled()) {
       Logger.Warn("Attempted to start server, but server is not installed.");
       return false;
     }
@@ -236,6 +236,13 @@ export default class Handler {
 
     this.instance.stdin?.write(data + "\n");
     return true;
+  }
+
+  public static IsInstalled(): boolean {
+    return fs.existsSync("data/server/");
+  }
+  public static IsRunning(): boolean {
+    return this.instance !== undefined;
   }
 
   private static async DeleteOldBackups(): Promise<number> {

@@ -1,5 +1,6 @@
 import {
   Client,
+  EmbedBuilder,
   Events,
   IntentsBitField,
   MessageFlags,
@@ -7,7 +8,7 @@ import {
   Routes,
 } from "discord.js";
 import * as fs from "fs";
-import type { Command } from "../../types/discord";
+import type { Command, EmbedData } from "../../types/discord";
 import Logger from "../../utils/logger";
 
 export default class Discord {
@@ -28,6 +29,30 @@ export default class Discord {
     this.LoadCommands();
     await this.DeployCommands(token, id);
     this.Start(token);
+  }
+
+  public static BuildEmbed(data: EmbedData): EmbedBuilder {
+    const avatar = data.interaction.user.avatarURL();
+    const embed = new EmbedBuilder({
+      title: data.title,
+      description:
+        typeof data.description === "string"
+          ? data.description
+          : data.description.join("\n"),
+      color: data.color,
+      footer: data.footer ?? {
+        text: data.interaction.guild!.name,
+        icon_url: data.interaction.guild?.iconURL() ?? undefined,
+      },
+      thumbnail:
+        !data.thumbnail && avatar
+          ? {
+              url: avatar,
+            }
+          : undefined,
+    });
+
+    return embed;
   }
 
   private static Start(token: string): void {
@@ -71,7 +96,20 @@ export default class Discord {
         return;
       }
 
-      command.callback(interaction);
+      try {
+        command.callback(interaction);
+      } catch (error) {
+        if (!interaction.deferred) {
+          await interaction.deferReply();
+        }
+
+        Logger.Error(`Error executing command ${command.data.name}:`, error);
+
+        interaction.editReply({
+          content:
+            "There was an error while executing this command. Please contact our team to get this adjusted!",
+        });
+      }
     });
 
     this.instance.login(token);
