@@ -8,18 +8,19 @@ import Logger from "../utils/logger";
 export default class Handler {
   public static instance: ChildProcess;
 
-  private constructor() {
+  private constructor() {}
+
+  public static async Init(): Promise<void> {
     if (!fs.existsSync("data")) {
       Logger.Debug("Initalizing data folder...");
 
       fs.mkdirSync("data/backups", { recursive: true });
       fs.writeFileSync("data/backups.json", "[]", "utf8");
     }
-  }
 
-  public static async Init(): Promise<void> {
     this.DeleteHangedBackups();
     this.BackupLoop();
+    this.RestartLoop();
   }
 
   public static Start(): boolean {
@@ -40,10 +41,6 @@ export default class Handler {
 
     Logger.Notice("Server process started with PID " + this.instance.pid);
 
-    process.stdin.on("data", (data) => {
-      this.instance.stdin?.write(data);
-    });
-
     this.instance.stdout?.on("data", (buffer: Buffer) => {
       if (config.show_console) {
         process.stdout.write(buffer);
@@ -62,6 +59,43 @@ export default class Handler {
     });
 
     return true;
+  }
+  public static Stop(): boolean {
+    if (!this.instance) {
+      Logger.Warn("Attempted to stop server, but server is not running.");
+      return false;
+    }
+
+    this.Write("stop");
+    return true;
+  }
+  public static async Restart(): Promise<boolean> {
+    if (!this.instance) {
+      this.Start();
+      return true;
+    }
+
+    this.Stop();
+
+    return new Promise<boolean>((resolve) => {
+      const failsafe = setTimeout(() => {
+        if (this.instance) {
+          Logger.Warn("Server failed to stop, killing process...");
+
+          this.instance.kill();
+          clearInterval(checkInterval);
+          resolve(false);
+        }
+      }, 30 * 1000);
+      const checkInterval = setInterval(() => {
+        if (!this.instance) {
+          clearInterval(checkInterval);
+          clearTimeout(failsafe);
+          this.Start();
+          resolve(true);
+        }
+      }, 1000);
+    });
   }
 
   public static async Install(link: string): Promise<boolean> {
@@ -267,5 +301,45 @@ export default class Handler {
       Logger.Info("Running automatic backup...");
       this.Backup();
     }, config.auto_backup_speed * 1000 * 60);
+  }
+  private static RestartLoop(): void {
+    const config = FileManager.ReadConfig();
+
+    if (!config.auto_restart) {
+      return;
+    }
+    if (config.auto_restart_timing.length === 0) {
+      Logger.Warn(
+        "Automatic restart is enabled but no timings are set. Ignoring..."
+      );
+      return;
+    }
+
+    Logger.Debug("Automatic restart loop started.");
+
+    setInterval(async () => {
+      const date = new Date();
+      const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+      const hours = date.getUTCHours().toString().padStart(2, "0");
+
+      if (!this.instance) {
+        return;
+      }
+      if (!config.auto_restart_timing.includes(`${hours}:${minutes}`)) {
+        return;
+      }
+
+      Logger.Info("Running automatic restart...");
+
+      for (const option of config.auto_restart_countdown_options) {
+        option.commands?.forEach((command) => {
+          this.Write(command);
+        });
+
+        await sleep(option.delay * 1000);
+      }
+
+      this.Restart();
+    }, 1000 * 60);
   }
 }

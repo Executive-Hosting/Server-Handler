@@ -3,14 +3,50 @@
   "server_allowed_role": "",
 
   "server_log": true,
-  "server_log_cooldown": 5,
   "server_log_speed": 1,
   "server_log_lines": 10,
   "server_log_channel": "",
 
   "auto_restart": true,
-  "auto_restart_timing": [],
-  "auto_restart_countdown_options": [],
+  "auto_restart_timing": ["13:19"],
+  "auto_restart_countdown_options": [
+    {
+      "delay": 30,
+      "commands": ["say Server will restart in 1 minute!"]
+    },
+    {
+      "delay": 20,
+      "commands": ["say Server will restart in 30 seconds!"]
+    },
+    {
+      "delay": 5,
+      "commands": ["say Server will restart in 10 seconds!"]
+    },
+    {
+      "delay": 1,
+      "commands": ["say Server will restart in 5 seconds!"]
+    },
+    {
+      "delay": 1,
+      "commands": ["say Server will restart in 4 seconds!"]
+    },
+    {
+      "delay": 1,
+      "commands": ["say Server will restart in 3 seconds!"]
+    },
+    {
+      "delay": 1,
+      "commands": ["say Server will restart in 2 seconds!"]
+    },
+    {
+      "delay": 1,
+      "commands": ["say Server will restart in 1 second!"]
+    },
+    {
+      "delay": 1,
+      "commands": ["kick @a Server is restarting!"]
+    }
+  ],
 
   "auto_backup": true,
   "auto_backup_speed": 60,
