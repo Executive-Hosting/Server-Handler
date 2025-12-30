@@ -1,3 +1,5 @@
+import Discord from "./modules/discord/discord";
 import Handler from "./modules/handler";
 
-Handler.Init();
+await Handler.Init();
+await Discord.Init();
