@@ -28,6 +28,19 @@ const Replies = {
       ],
     });
   },
+  ServerOffline: (interaction: ChatInputCommandInteraction): void => {
+    interaction.editReply({
+      embeds: [
+        Discord.BuildEmbed({
+          title: "Server Offline",
+          description:
+            "In order to run this command, your server must be online!",
+          color: Colors.Red,
+          interaction,
+        }),
+      ],
+    });
+  },
 };
 
 export default Replies;
