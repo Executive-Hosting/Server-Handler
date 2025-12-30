@@ -3,6 +3,7 @@ import {
   Colors,
   EmbedBuilder,
   Events,
+  GuildMember,
   IntentsBitField,
   MessageFlags,
   REST,
@@ -61,6 +62,8 @@ export default class Discord {
   }
 
   private static Start(token: string): void {
+    const config = FileManager.ReadConfig();
+
     this.instance = new Client({
       intents: [
         IntentsBitField.Flags.Guilds,
@@ -89,6 +92,17 @@ export default class Discord {
 
         interaction.editReply({
           content: "This command can only be used in a server.",
+        });
+        return;
+      }
+
+      const member = interaction.member! as GuildMember;
+
+      if (!member.roles.cache.has(config.server_allowed_role)) {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        interaction.editReply({
+          content: "You do not have the permission to run my commands!",
         });
         return;
       }
